@@ -8,8 +8,7 @@
 <?import javafx.scene.text.*?>
 
 <VBox alignment="CENTER" spacing="20.0" minHeight="600" minWidth="800" xmlns:fx="http://javafx.com/fxml/1"
-      xmlns="http://javafx.com/javafx/17.0.2-ea"
-      fx:controller="com.example.onlineservicesemulator.Controller">
+      xmlns="http://javafx.com/javafx/17.0.2-ea">
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
