@@ -1,11 +1,9 @@
 package com.example.onlineservicesemulator;
 
-
 import com.example.onlineservicesemulator.classes.JSONReader;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseEvent;
@@ -26,11 +24,14 @@ public class Controller implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         servicesNames = JSONReader.getServices();
-        initializeFilesMap();
+        setFilesMap();
+        setCheckboxList();
+    }
 
-        for (int i = 0; i < servicesNames.size(); i++) {
-            CheckBox checkBox = new CheckBox(servicesNames.get(i));
-            checkBox.setId("checkbox_" + servicesNames.get(i));
+    public void setCheckboxList() {
+        for (String servicesName : servicesNames) {
+            CheckBox checkBox = new CheckBox(servicesName);
+            checkBox.setId("checkbox_" + servicesName);
             checkboxList.getChildren().add(checkBox);
             checkboxList.setSpacing(5);
             checkBox.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -47,7 +48,7 @@ public class Controller implements Initializable {
         }
     }
 
-    public void initializeFilesMap() {
+    public void setFilesMap() {
         uploadedFiles = new HashMap<>();
         servicesNames.forEach(service -> uploadedFiles.put(service, null));
 
