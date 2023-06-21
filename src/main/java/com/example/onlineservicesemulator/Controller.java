@@ -18,6 +18,9 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+       setCheckboxList();
+    }
+    public void setCheckboxList(){
         ArrayList<String> servicesNames = JSONReader.getServices();
         for (int i = 0; i < servicesNames.size(); i++) {
             CheckBox checkBox = new CheckBox(servicesNames.get(i));
