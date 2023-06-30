@@ -32,7 +32,7 @@ public class Controller implements Initializable {
     }
 
     public void createAndSetCheckboxList() {
-        double lenghtSectionA = calculateLongestServiceString(servicesNames);
+        double lenghtSectionA = calculateLongestServiceString(servicesNames) * 8;
         checkboxList.setPrefWidth(lenghtSectionA);
         for (String serviceName : servicesNames) {
             CheckBox checkBox = new CheckBox();
@@ -70,7 +70,7 @@ public class Controller implements Initializable {
                 max = serviceName.length();
             }
         }
-        return max * 8;
+        return max;
     }
 
 }
