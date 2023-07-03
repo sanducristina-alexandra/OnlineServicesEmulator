@@ -16,10 +16,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class Controller implements Initializable {
 
@@ -37,7 +34,6 @@ public class Controller implements Initializable {
         createAndSetCheckboxList();
         setFilesMap();
         addFileButton.setVisible(false);
-        addFiles();
     }
 
     public void createAndSetCheckboxList() {
@@ -48,13 +44,13 @@ public class Controller implements Initializable {
             checkBox.setId("checkbox_" + serviceName);
             Label checkBoxLabel = new Label(serviceName);
             checkBox.setGraphic(checkBoxLabel);
-            checkBoxLabel.setOnMouseClicked(event -> onCheckboxLabelClicked(event, checkBox, checkBoxLabel));
+            checkBoxLabel.setOnMouseClicked(event -> onCheckboxLabelClicked(event, checkBox, checkBoxLabel, serviceName));
             checkboxList.getChildren().add(checkBox);
             checkboxList.setSpacing(5);
         }
     }
 
-    private void onCheckboxLabelClicked(MouseEvent event, CheckBox checkBox, Label checkBoxLabel) {
+    private void onCheckboxLabelClicked(MouseEvent event, CheckBox checkBox, Label checkBoxLabel,String serviceName) {
         checkBox.setSelected(false);
         filesList.getItems().clear();
         String clickedService = checkBoxLabel.getText();
@@ -63,14 +59,18 @@ public class Controller implements Initializable {
             addFileButton.setVisible(true);
         }
         event.consume();
+        addFiles(serviceName);
     }
 
     public void setFilesMap() {
         servicesAndUploadedFilesMap = new HashMap<>();
         servicesNames.forEach(service -> servicesAndUploadedFilesMap.put(service, null));
 
-        servicesAndUploadedFilesMap.put("WindowControlService", List.of("windowFile1.dat", "windowFile2.dat", "windowFile3.dat"));
-        servicesAndUploadedFilesMap.put("MusicControlService", List.of("musicFile1.dat", "musicFile2.dat", "musicFile3.dat"));
+        List<String> arraylist1 = new ArrayList<>();
+        arraylist1.add("windowFile1.dat");
+        arraylist1.add("windowFile2.dat");
+        arraylist1.add("windowFile3.dat");
+        servicesAndUploadedFilesMap.put("WindowControlService", arraylist1);
     }
     public double calculateLongestServiceString(List<String> servicesNames) {
         double max = 0;
@@ -82,12 +82,15 @@ public class Controller implements Initializable {
         return max;
     }
 
-    public void addFiles(){
+    public void addFiles(String serviceName){
         addFileButton.setOnMouseClicked(mouseEvent -> {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("uploadFilesWindow.fxml"));
                 Parent root = loader.load();
 
+                UploadFilesWindowController uploadFilesController = loader.getController();
+                uploadFilesController.setServiceName(serviceName);
+                uploadFilesController.setMainController(this);
                 Stage stage = new Stage();
                 stage.setScene(new Scene(root));
 
@@ -96,5 +99,13 @@ public class Controller implements Initializable {
                 exception.printStackTrace();
             }
         });
+    }
+
+    public void handleFileSelection(String serviceName, List<String> selectedFiles){
+        List<String> files = servicesAndUploadedFilesMap.get(serviceName);
+        files.addAll(selectedFiles);
+        for(String s: selectedFiles){
+            System.out.println(s);
+        }
     }
 }
