@@ -5,6 +5,7 @@
 
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Button?>
 <VBox alignment="CENTER" spacing="20.0" minHeight="600" minWidth="800" xmlns:fx="http://javafx.com/fxml/1"
       xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="com.example.onlineservicesemulator.Controller">
     <padding>
@@ -17,4 +18,5 @@
         </VBox>
         <ListView fx:id="filesList" prefHeight="200" prefWidth="160"/>
     </HBox>
+    <Button fx:id="addFileButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="81.0" text="Add File"/>
 </VBox>

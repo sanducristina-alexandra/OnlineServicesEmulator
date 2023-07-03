@@ -3,12 +3,17 @@ package com.example.onlineservicesemulator;
 
 import com.example.onlineservicesemulator.classes.JSONReader;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -22,6 +27,8 @@ public class Controller implements Initializable {
     private ListView<String> filesList;
     @FXML
     private VBox checkboxList;
+    @FXML
+    private Button addFileButton;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
     @Override
@@ -29,6 +36,7 @@ public class Controller implements Initializable {
         servicesNames = JSONReader.getServices();
         createAndSetCheckboxList();
         setFilesMap();
+        addFileButton.setVisible(false);
     }
 
     public void createAndSetCheckboxList() {
@@ -51,6 +59,7 @@ public class Controller implements Initializable {
         String clickedService = checkBoxLabel.getText();
         if (servicesAndUploadedFilesMap.containsKey(clickedService) && servicesAndUploadedFilesMap.get(clickedService) != null) {
             filesList.getItems().addAll(servicesAndUploadedFilesMap.get(clickedService));
+            addFileButton.setVisible(true);
         }
         event.consume();
     }
@@ -70,5 +79,21 @@ public class Controller implements Initializable {
             }
         }
         return max;
+    }
+
+    public void addFiles(){
+        addFileButton.setOnMouseClicked(mouseEvent -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("uploadFilesWindow.fxml"));
+                Parent root = loader.load();
+
+                Stage stage = new Stage();
+                stage.setScene(new Scene(root));
+
+                stage.show();
+            }catch (Exception exception){
+                exception.printStackTrace();
+            }
+        });
     }
 }
