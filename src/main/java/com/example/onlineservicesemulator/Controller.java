@@ -37,6 +37,7 @@ public class Controller implements Initializable {
         createAndSetCheckboxList();
         setFilesMap();
         addFileButton.setVisible(false);
+        addFiles();
     }
 
     public void createAndSetCheckboxList() {
