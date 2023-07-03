@@ -18,5 +18,7 @@
         </VBox>
         <ListView fx:id="filesList" prefHeight="200" prefWidth="160"/>
     </HBox>
+
     <Button fx:id="addFileButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="81.0" text="Add File"/>
+    <Button fx:id="removeFileButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="81.0" text="Remove File"/>
 </VBox>
