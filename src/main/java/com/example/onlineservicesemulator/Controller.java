@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 import java.net.URL;
 import java.util.*;
 
+
 public class Controller implements Initializable {
 
     @FXML
@@ -37,7 +38,7 @@ public class Controller implements Initializable {
     }
 
     public void createAndSetCheckboxList() {
-        double lengthSectionA = calculateLongestServiceString(servicesNames)*8;
+        short lengthSectionA = (short) (calculateLongestServiceString(servicesNames)*8);
         checkboxList.setPrefWidth(lengthSectionA);
         for (String serviceName : servicesNames) {
             CheckBox checkBox = new CheckBox();
@@ -58,25 +59,20 @@ public class Controller implements Initializable {
             filesList.getItems().addAll(servicesAndUploadedFilesMap.get(clickedService));
             addFileButton.setVisible(true);
         }
+        addFileButton.setVisible(true);
         event.consume();
         addFiles(serviceName);
     }
 
     public void setFilesMap() {
         servicesAndUploadedFilesMap = new HashMap<>();
-        servicesNames.forEach(service -> servicesAndUploadedFilesMap.put(service, null));
-
-        List<String> arraylist1 = new ArrayList<>();
-        arraylist1.add("windowFile1.dat");
-        arraylist1.add("windowFile2.dat");
-        arraylist1.add("windowFile3.dat");
-        servicesAndUploadedFilesMap.put("WindowControlService", arraylist1);
+        servicesNames.forEach(service -> servicesAndUploadedFilesMap.put(service, new ArrayList<>()));
     }
-    public double calculateLongestServiceString(List<String> servicesNames) {
-        double max = 0;
+    public short calculateLongestServiceString(List<String> servicesNames) {
+        short max = 0;
         for (String serviceName : servicesNames) {
             if (serviceName.length() > max) {
-                max = serviceName.length();
+                max = (short) serviceName.length();
             }
         }
         return max;
@@ -104,8 +100,5 @@ public class Controller implements Initializable {
     public void handleFileSelection(String serviceName, List<String> selectedFiles){
         List<String> files = servicesAndUploadedFilesMap.get(serviceName);
         files.addAll(selectedFiles);
-        for(String s: selectedFiles){
-            System.out.println(s);
-        }
     }
 }

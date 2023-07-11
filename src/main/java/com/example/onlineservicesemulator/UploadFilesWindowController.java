@@ -1,8 +1,8 @@
 package com.example.onlineservicesemulator;
 
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.stage.FileChooser;
 
@@ -24,6 +24,7 @@ public class UploadFilesWindowController implements Initializable {
     private String serviceName;
     private Controller mainController;
     private List<String> selectedFilesList = new ArrayList<>();
+    private Alert popup = new Alert(Alert.AlertType.INFORMATION);
 
     @Override
         public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -50,7 +51,9 @@ public class UploadFilesWindowController implements Initializable {
                         Files.copy(file.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
                         selectedFilesList.add(file.getName());
                         handleFileSelection();
-                        System.out.println("File uploaded: " + destination);
+                        popup.setContentText("File uploaded: " + destination);
+                        popup.showAndWait();
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
