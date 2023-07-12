@@ -3,20 +3,27 @@ package com.example.onlineservicesemulator;
 
 import com.example.onlineservicesemulator.classes.JSONReader;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+import javafx.stage.FileChooser;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 
 public class Controller implements Initializable {
@@ -27,18 +34,23 @@ public class Controller implements Initializable {
     private VBox checkboxList;
     @FXML
     private Button addFileButton;
+    @FXML
+    private Label serviceSelected;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
+    private Alert popup = new Alert(Alert.AlertType.INFORMATION);
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         servicesNames = JSONReader.getServices();
         createAndSetCheckboxList();
         setFilesMap();
-        addFileButton.setVisible(false);
+        addFileButton.setDisable(true);
+        addFileButton.setOpacity(0.5);
     }
 
     public void createAndSetCheckboxList() {
-        short lengthSectionA = (short) (calculateLongestServiceString(servicesNames)*8);
+        short lengthSectionA = (short) (calculateLongestServiceString(servicesNames) * 8);
         checkboxList.setPrefWidth(lengthSectionA);
         for (String serviceName : servicesNames) {
             CheckBox checkBox = new CheckBox();
@@ -51,23 +63,26 @@ public class Controller implements Initializable {
         }
     }
 
-    private void onCheckboxLabelClicked(MouseEvent event, CheckBox checkBox, Label checkBoxLabel,String serviceName) {
+    private void onCheckboxLabelClicked(MouseEvent event, CheckBox checkBox, Label checkBoxLabel, String serviceName) {
         checkBox.setSelected(false);
         filesList.getItems().clear();
         String clickedService = checkBoxLabel.getText();
         if (servicesAndUploadedFilesMap.containsKey(clickedService) && servicesAndUploadedFilesMap.get(clickedService) != null) {
             filesList.getItems().addAll(servicesAndUploadedFilesMap.get(clickedService));
-            addFileButton.setVisible(true);
         }
-        addFileButton.setVisible(true);
+        addFileButton.setDisable(false);
+        addFileButton.setOpacity(1.0);
         event.consume();
         addFiles(serviceName);
+        serviceSelected.setText(serviceName);
     }
+
 
     public void setFilesMap() {
         servicesAndUploadedFilesMap = new HashMap<>();
         servicesNames.forEach(service -> servicesAndUploadedFilesMap.put(service, new ArrayList<>()));
     }
+
     public short calculateLongestServiceString(List<String> servicesNames) {
         short max = 0;
         for (String serviceName : servicesNames) {
@@ -78,26 +93,51 @@ public class Controller implements Initializable {
         return max;
     }
 
-    public void addFiles(String serviceName){
+    public void addFiles(String serviceName) {
         addFileButton.setOnMouseClicked(mouseEvent -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("uploadFilesWindow.fxml"));
-                Parent root = loader.load();
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("CSV Files", "*.csv"),
+                    new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+            List<File> selectedFiles = fileChooser.showOpenMultipleDialog(addFileButton.getScene().getWindow());
 
-                UploadFilesWindowController uploadFilesController = loader.getController();
-                uploadFilesController.setServiceName(serviceName);
-                uploadFilesController.setMainController(this);
-                Stage stage = new Stage();
-                stage.setScene(new Scene(root));
+            if (selectedFiles != null) {
+                List<String> selectedFilesList = new ArrayList<>();
+                try {
+                    Path uploadedFilesDir = Paths.get(".\\uploadedfiles");
+                    if (!Files.exists(uploadedFilesDir)) {
+                        Files.createDirectory(uploadedFilesDir);
+                    }
 
-                stage.show();
-            }catch (Exception exception){
-                exception.printStackTrace();
+                    for (File file : selectedFiles) {
+                        Path destination = uploadedFilesDir.resolve(file.getName());
+                        if (Files.exists(destination)) {
+                            popup.setContentText("File '" + file.getName() + "' is already uploaded.");
+                            popup.showAndWait();
+                        } else {
+                            Files.copy(file.toPath(), destination);
+                            selectedFilesList.add(file.getName());
+                        }
+                    }
+                    if (!selectedFilesList.isEmpty()) {
+                        popup.setContentText("Files have been uploaded.");
+                        popup.showAndWait();
+                    }
+                    handleFileSelection(serviceName, selectedFilesList);
+                    refreshFilesList(serviceName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
 
-    public void handleFileSelection(String serviceName, List<String> selectedFiles){
+    private void refreshFilesList(String serviceName) {
+        filesList.getItems().clear();
+        filesList.getItems().addAll(servicesAndUploadedFilesMap.get(serviceName));
+    }
+
+    public void handleFileSelection(String serviceName, List<String> selectedFiles) {
         List<String> files = servicesAndUploadedFilesMap.get(serviceName);
         files.addAll(selectedFiles);
     }
