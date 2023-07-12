@@ -2,19 +2,16 @@ package com.example.onlineservicesemulator;
 
 
 import com.example.onlineservicesemulator.classes.JSONReader;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +19,12 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+
 
 public class Controller implements Initializable {
 
@@ -33,21 +35,22 @@ public class Controller implements Initializable {
     @FXML
     private Button addFileButton;
     @FXML
-    private Button removeFileButton;
+    private Label serviceSelected;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
+    private Alert popup = new Alert(Alert.AlertType.INFORMATION);
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         servicesNames = JSONReader.getServices();
         createAndSetCheckboxList();
         setFilesMap();
-        addFileButton.setVisible(false);
-        setRemoveFileButtonListener();
+        addFileButton.setDisable(true);
+        addFileButton.setOpacity(0.5);
     }
 
     public void createAndSetCheckboxList() {
-        double lengthSectionA = calculateLongestServiceString(servicesNames) * 8;
+        short lengthSectionA = (short) (calculateLongestServiceString(servicesNames) * 8);
         checkboxList.setPrefWidth(lengthSectionA);
         for (String serviceName : servicesNames) {
             CheckBox checkBox = new CheckBox();
@@ -66,28 +69,25 @@ public class Controller implements Initializable {
         String clickedService = checkBoxLabel.getText();
         if (servicesAndUploadedFilesMap.containsKey(clickedService) && servicesAndUploadedFilesMap.get(clickedService) != null) {
             filesList.getItems().addAll(servicesAndUploadedFilesMap.get(clickedService));
-            addFileButton.setVisible(true);
         }
+        addFileButton.setDisable(false);
+        addFileButton.setOpacity(1.0);
         event.consume();
         addFiles(serviceName);
+        serviceSelected.setText(serviceName);
     }
+
 
     public void setFilesMap() {
         servicesAndUploadedFilesMap = new HashMap<>();
-        servicesNames.forEach(service -> servicesAndUploadedFilesMap.put(service, null));
-
-        List<String> arraylist1 = new ArrayList<>();
-        arraylist1.add("windowFile1.dat");
-        arraylist1.add("windowFile2.dat");
-        arraylist1.add("windowFile3.dat");
-        servicesAndUploadedFilesMap.put("WindowControlService", arraylist1);
+        servicesNames.forEach(service -> servicesAndUploadedFilesMap.put(service, new ArrayList<>()));
     }
 
-    public double calculateLongestServiceString(List<String> servicesNames) {
-        double max = 0;
+    public short calculateLongestServiceString(List<String> servicesNames) {
+        short max = 0;
         for (String serviceName : servicesNames) {
             if (serviceName.length() > max) {
-                max = serviceName.length();
+                max = (short) serviceName.length();
             }
         }
         return max;
@@ -95,58 +95,50 @@ public class Controller implements Initializable {
 
     public void addFiles(String serviceName) {
         addFileButton.setOnMouseClicked(mouseEvent -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("uploadFilesWindow.fxml"));
-                Parent root = loader.load();
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("CSV Files", "*.csv"),
+                    new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+            List<File> selectedFiles = fileChooser.showOpenMultipleDialog(addFileButton.getScene().getWindow());
 
-                UploadFilesWindowController uploadFilesController = loader.getController();
-                uploadFilesController.setServiceName(serviceName);
-                uploadFilesController.setMainController(this);
-                Stage stage = new Stage();
-                stage.setScene(new Scene(root));
+            if (selectedFiles != null) {
+                List<String> selectedFilesList = new ArrayList<>();
+                try {
+                    Path uploadedFilesDir = Paths.get(".\\uploadedfiles");
+                    if (!Files.exists(uploadedFilesDir)) {
+                        Files.createDirectory(uploadedFilesDir);
+                    }
 
-                stage.show();
-            } catch (Exception exception) {
-                exception.printStackTrace();
-            }
-        });
-    }
-
-    public void setRemoveFileButtonListener() {
-        removeFileButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                String fileToBeRemoved = filesList.getSelectionModel().getSelectedItem();
-                if (!fileToBeRemoved.isEmpty()) {
-                    filesList.getItems().remove(fileToBeRemoved);
-                    servicesAndUploadedFilesMap.remove(fileToBeRemoved);
-                    removeFileFromDisk(fileToBeRemoved);
+                    for (File file : selectedFiles) {
+                        Path destination = uploadedFilesDir.resolve(file.getName());
+                        if (Files.exists(destination)) {
+                            popup.setContentText("File '" + file.getName() + "' is already uploaded.");
+                            popup.showAndWait();
+                        } else {
+                            Files.copy(file.toPath(), destination);
+                            selectedFilesList.add(file.getName());
+                        }
+                    }
+                    if (!selectedFilesList.isEmpty()) {
+                        popup.setContentText("Files have been uploaded.");
+                        popup.showAndWait();
+                    }
+                    handleFileSelection(serviceName, selectedFilesList);
+                    refreshFilesList(serviceName);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });
     }
 
-    private void removeFileFromDisk(String fileToBeRemoved) {
-        Path uploadedFilesDir = Paths.get(".\\uploadedfiles");
-        Path filePath = uploadedFilesDir.resolve(fileToBeRemoved);
-        if (Files.exists(filePath)) {
-            try {
-                Files.delete(filePath);
-                System.out.println("File deleted successfully: " + filePath);
-            } catch (IOException e) {
-                System.out.println("Error deleting file: " + filePath);
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("File doesn't exist on disk.");
-        }
+    private void refreshFilesList(String serviceName) {
+        filesList.getItems().clear();
+        filesList.getItems().addAll(servicesAndUploadedFilesMap.get(serviceName));
     }
 
     public void handleFileSelection(String serviceName, List<String> selectedFiles) {
         List<String> files = servicesAndUploadedFilesMap.get(serviceName);
         files.addAll(selectedFiles);
-        for (String s : selectedFiles) {
-            System.out.println(s);
-        }
     }
 }
