@@ -1,7 +1,7 @@
 package com.example.onlineservicesemulator;
 
-
 import com.example.onlineservicesemulator.classes.JSONReader;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-
 public class Controller implements Initializable {
 
     @FXML
@@ -34,6 +33,8 @@ public class Controller implements Initializable {
     private VBox checkboxList;
     @FXML
     private Button addFileButton;
+    @FXML
+    private Button removeFileButton;
     @FXML
     private Label serviceSelected;
     private List<String> servicesNames;
@@ -45,12 +46,13 @@ public class Controller implements Initializable {
         servicesNames = JSONReader.getServices();
         createAndSetCheckboxList();
         setFilesMap();
-        addFileButton.setDisable(true);
-        addFileButton.setOpacity(0.5);
+        disableFileButtons();
+        setFilesListListener();
+        setRemoveFileButtonListener();
     }
 
     public void createAndSetCheckboxList() {
-        short lengthSectionA = (short) (calculateLongestServiceString(servicesNames) * 8);
+        short lengthSectionA = (short) (calculateLongestServiceString(servicesNames) * 9);
         checkboxList.setPrefWidth(lengthSectionA);
         for (String serviceName : servicesNames) {
             CheckBox checkBox = new CheckBox();
@@ -70,13 +72,12 @@ public class Controller implements Initializable {
         if (servicesAndUploadedFilesMap.containsKey(clickedService) && servicesAndUploadedFilesMap.get(clickedService) != null) {
             filesList.getItems().addAll(servicesAndUploadedFilesMap.get(clickedService));
         }
-        addFileButton.setDisable(false);
-        addFileButton.setOpacity(1.0);
-        event.consume();
+        enableAddFileButton();
+        disableRemoveFileButton();
         addFiles(serviceName);
         serviceSelected.setText(serviceName);
+        event.consume();
     }
-
 
     public void setFilesMap() {
         servicesAndUploadedFilesMap = new HashMap<>();
@@ -140,5 +141,71 @@ public class Controller implements Initializable {
     public void handleFileSelection(String serviceName, List<String> selectedFiles) {
         List<String> files = servicesAndUploadedFilesMap.get(serviceName);
         files.addAll(selectedFiles);
+    }
+
+    public void setRemoveFileButtonListener() {
+        removeFileButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                String fileToBeRemoved = filesList.getSelectionModel().getSelectedItem();
+                if (!fileToBeRemoved.isEmpty()) {
+                    filesList.getItems().remove(fileToBeRemoved);
+                    servicesAndUploadedFilesMap.remove(fileToBeRemoved);
+                    removeFileFromDisk(fileToBeRemoved);
+                }
+            }
+        });
+    }
+
+    private void removeFileFromDisk(String fileToBeRemoved) {
+        Path uploadedFilesDir = Paths.get(".\\uploadedfiles");
+        Path filePath = uploadedFilesDir.resolve(fileToBeRemoved);
+        if (Files.exists(filePath)) {
+            try {
+                Files.delete(filePath);
+                popup.setContentText("File deleted successfully: " + filePath);
+                popup.showAndWait();
+            } catch (IOException e) {
+                popup.setContentText("Error deleting file: " + filePath);
+                popup.showAndWait();
+            }
+        } else {
+            popup.setContentText("File doesn't exist on disk: " + fileToBeRemoved);
+            popup.showAndWait();
+        }
+        disableRemoveFileButton();
+    }
+
+    private void setFilesListListener() {
+        filesList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                if (filesList.getSelectionModel().getSelectedItem() != null) {
+                    enableRemoveFileButton();
+                }
+            }
+        });
+    }
+
+    private void disableFileButtons() {
+        addFileButton.setDisable(true);
+        addFileButton.setOpacity(0.5);
+        removeFileButton.setDisable(true);
+        removeFileButton.setOpacity(0.5);
+    }
+
+    private void disableRemoveFileButton() {
+        removeFileButton.setDisable(true);
+        removeFileButton.setOpacity(0.5);
+    }
+
+    private void enableRemoveFileButton() {
+        removeFileButton.setDisable(false);
+        removeFileButton.setOpacity(1);
+    }
+
+    private void enableAddFileButton() {
+        addFileButton.setDisable(false);
+        addFileButton.setOpacity(1.0);
     }
 }

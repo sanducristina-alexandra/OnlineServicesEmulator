@@ -1,32 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.layout.*?>
-
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+
 <VBox alignment="CENTER" spacing="20.0" minHeight="600" minWidth="800" xmlns:fx="http://javafx.com/fxml/1"
       xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="com.example.onlineservicesemulator.Controller">
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
-    <HBox>
-        <VBox fx:id="checkboxList" layoutX="20.0" layoutY="20.0" prefHeight="161.0" prefWidth="50.0"
+    <GridPane hgap="20" vgap="10">
+        <VBox fx:id="checkboxList" GridPane.rowIndex="0" GridPane.columnIndex="0" prefHeight="161.0" prefWidth="50.0"
               style="-fx-border-color: black; -fx-border-width: 1.0;">
             <padding>
-                <Insets top="10" right="10" bottom="10" left="10" />
+                <Insets top="10" right="10" bottom="10" left="10"/>
             </padding>
-            <Label text="Available Services" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <Label text="Available Services" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
         </VBox>
-        <VBox layoutX="20.0" layoutY="20.0" prefHeight="161.0" prefWidth="200.0"
+        <VBox GridPane.rowIndex="0" GridPane.columnIndex="1" prefHeight="161.0" prefWidth="200.0"
               style="-fx-border-color: black; -fx-border-width: 1.0;">
             <padding>
-                <Insets top="10" right="10" bottom="10" left="10" />
+                <Insets top="10" right="10" bottom="10" left="10"/>
             </padding>
-            <Label fx:id="serviceSelected" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            <Label fx:id="serviceSelected" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
             <ListView fx:id="filesList" prefHeight="200" prefWidth="160"/>
         </VBox>
-    </HBox>
-    <Button fx:id="addFileButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="81.0" text="Add File"/>
+        <HBox GridPane.rowIndex="1" GridPane.columnIndex="1" spacing="20" alignment="CENTER">
+            <Button fx:id="addFileButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="81.0" text="Add File"/>
+            <Button fx:id="removeFileButton" mnemonicParsing="false" prefHeight="25.0" prefWidth="81.0"
+                    text="Remove File"/>
+        </HBox>
+    </GridPane>
 </VBox>
