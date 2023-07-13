@@ -36,10 +36,10 @@ public class Controller implements Initializable {
     @FXML
     private Button removeFileButton;
     @FXML
-    private Label serviceSelected;
+    private Label selectedService;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
-    private Alert popup = new Alert(Alert.AlertType.INFORMATION);
+    private final Alert popup = new Alert(Alert.AlertType.INFORMATION);
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -75,7 +75,7 @@ public class Controller implements Initializable {
         enableAddFileButton();
         disableRemoveFileButton();
         addFiles(serviceName);
-        serviceSelected.setText(serviceName);
+        selectedService.setText(serviceName);
         event.consume();
     }
 
@@ -150,8 +150,9 @@ public class Controller implements Initializable {
                 String fileToBeRemoved = filesList.getSelectionModel().getSelectedItem();
                 if (!fileToBeRemoved.isEmpty()) {
                     filesList.getItems().remove(fileToBeRemoved);
-                    servicesAndUploadedFilesMap.remove(fileToBeRemoved);
+                    servicesAndUploadedFilesMap.get(selectedService.getText()).remove(fileToBeRemoved);
                     removeFileFromDisk(fileToBeRemoved);
+                    refreshFilesList(selectedService.getText());
                 }
             }
         });
@@ -189,23 +190,23 @@ public class Controller implements Initializable {
 
     private void disableFileButtons() {
         addFileButton.setDisable(true);
-        addFileButton.setOpacity(0.5);
+        addFileButton.setOpacity(0.5f);
         removeFileButton.setDisable(true);
-        removeFileButton.setOpacity(0.5);
+        removeFileButton.setOpacity(0.5f);
     }
 
     private void disableRemoveFileButton() {
         removeFileButton.setDisable(true);
-        removeFileButton.setOpacity(0.5);
+        removeFileButton.setOpacity(0.5f);
     }
 
     private void enableRemoveFileButton() {
         removeFileButton.setDisable(false);
-        removeFileButton.setOpacity(1);
+        removeFileButton.setOpacity(1.0f);
     }
 
     private void enableAddFileButton() {
         addFileButton.setDisable(false);
-        addFileButton.setOpacity(1.0);
+        addFileButton.setOpacity(1.0f);
     }
 }
