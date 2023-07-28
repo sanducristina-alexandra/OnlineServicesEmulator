@@ -1,6 +1,8 @@
 package com.example.onlineservicesemulator;
 
-import com.example.onlineservicesemulator.classes.JSONReader;
+import com.example.onlineservicesemulator.utils.JSONReader;
+import com.example.onlineservicesemulator.utils.TextFileReader;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -15,7 +17,11 @@ import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,6 +32,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
+
 
     @FXML
     private ListView<String> filesList;
@@ -60,8 +67,33 @@ public class Controller implements Initializable {
             Label checkBoxLabel = new Label(serviceName);
             checkBox.setGraphic(checkBoxLabel);
             checkBoxLabel.setOnMouseClicked(event -> onCheckboxLabelClicked(event, checkBox, checkBoxLabel, serviceName));
+            checkBox.setOnAction(actionEvent -> {
+                try {
+                    onCheckboxClicked(actionEvent,checkBox,serviceName);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
             checkboxList.getChildren().add(checkBox);
             checkboxList.setSpacing(5);
+        }
+    }
+
+    private void onCheckboxClicked(ActionEvent actionEvent, CheckBox checkBox, String serviceName) throws IOException {
+        if(checkBox.isSelected()) {
+            List<String> fileNames = servicesAndUploadedFilesMap.get(serviceName);
+            String data = serviceName + "\n" + TextFileReader.getData(fileNames);
+            URL url = new URL("http://localhost:8080/receive_data_from_emulator");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "text/plain");
+            conn.setDoOutput(true);
+            try (OutputStream os = conn.getOutputStream()) {
+                OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+                osw.write(data);
+                osw.flush();
+            }
+            conn.disconnect();
         }
     }
 
