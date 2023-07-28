@@ -1,4 +1,4 @@
-package com.example.onlineservicesemulator.classes;
+package com.example.onlineservicesemulator.utils;
 
 import java.io.IOException;
 import java.nio.file.Files;
