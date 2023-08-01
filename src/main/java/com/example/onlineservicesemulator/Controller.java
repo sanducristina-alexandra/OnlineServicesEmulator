@@ -1,6 +1,8 @@
 package com.example.onlineservicesemulator;
 
-import com.example.onlineservicesemulator.classes.JSONReader;
+import com.example.onlineservicesemulator.utils.JSONReader;
+import com.example.onlineservicesemulator.utils.TextFileReader;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -13,9 +15,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -64,6 +67,7 @@ public class Controller implements Initializable {
             checkboxList.setSpacing(5);
         }
     }
+
 
     private void onCheckboxLabelClicked(MouseEvent event, CheckBox checkBox, Label checkBoxLabel, String serviceName) {
         checkBox.setSelected(false);
