@@ -4,10 +4,9 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class MqttPublisher {
-    private final String brokerUrl; // MQTT broker URL, e.g., tcp://localhost:1883
-    private final String topic;     // MQTT topic to which data will be published
+    private final String brokerUrl;
+    private final String topic;
     private MqttClient mqttClient;
-
     private static final String MQTT_CLIENT_ID = "OnlineServicesEmulator";
     public MqttPublisher(String brokerUrl, String topic) {
         this.brokerUrl = brokerUrl;

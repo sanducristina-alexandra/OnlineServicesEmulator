@@ -9,4 +9,8 @@ module com.example.onlineservicesemulator {
     exports com.example.onlineservicesemulator;
     exports com.example.onlineservicesemulator.mqtt;
     opens com.example.onlineservicesemulator.mqtt to javafx.fxml;
+    exports com.example.onlineservicesemulator.models;
+    opens com.example.onlineservicesemulator.models to javafx.fxml;
+    exports com.example.onlineservicesemulator.handlers;
+    opens com.example.onlineservicesemulator.handlers to javafx.fxml;
 }

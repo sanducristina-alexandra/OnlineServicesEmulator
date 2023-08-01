@@ -1,5 +1,8 @@
 package com.example.onlineservicesemulator;
 
+import com.example.onlineservicesemulator.handlers.CarClimatizationFileHandler;
+import com.example.onlineservicesemulator.models.Topic;
+import com.example.onlineservicesemulator.mqtt.MqttPublisher;
 import com.example.onlineservicesemulator.utils.JSONReader;
 import com.example.onlineservicesemulator.utils.TextFileReader;
 import javafx.event.ActionEvent;
@@ -39,9 +42,14 @@ public class Controller implements Initializable {
     @FXML
     private Button removeFileButton;
     @FXML
+    private Button connectButton;
+    @FXML
+    private Button getReportButton;
+    @FXML
     private Label selectedService;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
+    private MqttPublisher mqttPublisher;
     private final Alert popup = new Alert(Alert.AlertType.INFORMATION);
 
     @Override
@@ -52,6 +60,7 @@ public class Controller implements Initializable {
         disableFileButtons();
         setFilesListListener();
         setRemoveFileButtonListener();
+        setConnectButton();
     }
 
     public void createAndSetCheckboxList() {
@@ -67,7 +76,6 @@ public class Controller implements Initializable {
             checkboxList.setSpacing(5);
         }
     }
-
 
     private void onCheckboxLabelClicked(MouseEvent event, CheckBox checkBox, Label checkBoxLabel, String serviceName) {
         checkBox.setSelected(false);
@@ -187,6 +195,26 @@ public class Controller implements Initializable {
             public void handle(MouseEvent event) {
                 if (filesList.getSelectionModel().getSelectedItem() != null) {
                     enableRemoveFileButton();
+                }
+            }
+        });
+    }
+
+    private void setConnectButton() {
+        connectButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                Topic topic = null;
+                switch (selectedService.getText()) {
+                    case "CarClimatizationService": {
+                        CarClimatizationFileHandler carClimatizationFileHandler =
+                                new CarClimatizationFileHandler(servicesAndUploadedFilesMap.get(selectedService.getText()));
+                        carClimatizationFileHandler.sendData();
+                        break;
+                    }
+                    case "CarGpsService": {
+                        break;
+                    }
                 }
             }
         });
