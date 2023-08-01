@@ -2,6 +2,7 @@ package com.example.onlineservicesemulator.handlers;
 
 import com.example.onlineservicesemulator.models.Topic;
 import com.example.onlineservicesemulator.mqtt.MqttPublisher;
+import com.example.onlineservicesemulator.mqtt.MqttPublisherSingleton;
 import com.example.onlineservicesemulator.utils.TextFileReader;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
@@ -14,8 +15,7 @@ public class CarClimatizationFileHandler {
     public CarClimatizationFileHandler(List<String> fileNames) {
         try {
             this.fileNames = fileNames;
-            this.mqttPublisher = new MqttPublisher("tcp://broker.emqx.io:1883",
-                    Topic.INSIDE_TEMPERATURE_SENSOR.toString());
+            this.mqttPublisher = MqttPublisherSingleton.getInstance().getMqttPublisher();
             mqttPublisher.connect();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -45,5 +45,13 @@ public class CarClimatizationFileHandler {
                 }
             }
         }, 0, 15000);
+    }
+
+    public void sendData(String setTemperature) {
+        try {
+            mqttPublisher.sendData(setTemperature);
+        } catch (MqttException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

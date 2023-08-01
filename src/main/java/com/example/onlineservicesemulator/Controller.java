@@ -1,6 +1,7 @@
 package com.example.onlineservicesemulator;
 
 import com.example.onlineservicesemulator.handlers.CarClimatizationFileHandler;
+import com.example.onlineservicesemulator.handlers.CarClimatizationSetTemperatureHandler;
 import com.example.onlineservicesemulator.models.Topic;
 import com.example.onlineservicesemulator.mqtt.MqttPublisher;
 import com.example.onlineservicesemulator.utils.JSONReader;
@@ -9,11 +10,8 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -30,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.function.UnaryOperator;
+import java.util.regex.Pattern;
 
 public class Controller implements Initializable {
 
@@ -47,6 +47,12 @@ public class Controller implements Initializable {
     private Button getReportButton;
     @FXML
     private Label selectedService;
+    @FXML
+    private VBox vboxTemperature;
+    @FXML
+    private TextField textFieldTemperature;
+    @FXML
+    private Button buttonTemperature;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
     private MqttPublisher mqttPublisher;
@@ -61,6 +67,8 @@ public class Controller implements Initializable {
         setFilesListListener();
         setRemoveFileButtonListener();
         setConnectButton();
+        setTextFieldTemperatureFilter();
+        setButtonTemperature();
     }
 
     public void createAndSetCheckboxList() {
@@ -84,6 +92,7 @@ public class Controller implements Initializable {
         if (servicesAndUploadedFilesMap.containsKey(clickedService) && servicesAndUploadedFilesMap.get(clickedService) != null) {
             filesList.getItems().addAll(servicesAndUploadedFilesMap.get(clickedService));
         }
+        vboxTemperature.setVisible(serviceName.equals("CarClimatizationService"));
         enableAddFileButton();
         disableRemoveFileButton();
         addFiles(serviceName);
@@ -240,5 +249,36 @@ public class Controller implements Initializable {
     private void enableAddFileButton() {
         addFileButton.setDisable(false);
         addFileButton.setOpacity(1.0f);
+    }
+
+    private void setTextFieldTemperatureFilter() {
+        UnaryOperator<TextFormatter.Change> filter = change -> {
+            String newText = change.getControlNewText();
+            if (newText.isEmpty()) {
+                return change;
+            }
+            if (Pattern.matches("\\d*", newText)) {
+                try {
+                    int temperatureValue = Integer.parseInt(newText);
+                    if (temperatureValue >= 0 && temperatureValue <= 30) {
+                        return change;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            return null;
+        };
+        TextFormatter<String> textFormatter = new TextFormatter<>(filter);
+        textFieldTemperature.setTextFormatter(textFormatter);
+    }
+
+    private void setButtonTemperature() {
+        buttonTemperature.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                CarClimatizationSetTemperatureHandler carClimatizationSetTemperatureHandler = new CarClimatizationSetTemperatureHandler();
+                carClimatizationSetTemperatureHandler.sendData("set " + textFieldTemperature.getText());
+            }
+        });
     }
 }
