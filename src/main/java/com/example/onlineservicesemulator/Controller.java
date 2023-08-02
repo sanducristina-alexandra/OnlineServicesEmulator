@@ -2,6 +2,7 @@ package com.example.onlineservicesemulator;
 
 import com.example.onlineservicesemulator.handlers.CarClimatizationFileHandler;
 import com.example.onlineservicesemulator.handlers.CarClimatizationSetTemperatureHandler;
+import com.example.onlineservicesemulator.handlers.CarGpsServiceHandler;
 import com.example.onlineservicesemulator.models.Topic;
 import com.example.onlineservicesemulator.mqtt.MqttPublisher;
 import com.example.onlineservicesemulator.utils.JSONReader;
@@ -222,6 +223,9 @@ public class Controller implements Initializable {
                         break;
                     }
                     case "CarGpsService": {
+                        CarGpsServiceHandler carGpsServiceHandler =
+                                new CarGpsServiceHandler(servicesAndUploadedFilesMap.get(selectedService.getText()));
+                        carGpsServiceHandler.sendData();
                         break;
                     }
                 }

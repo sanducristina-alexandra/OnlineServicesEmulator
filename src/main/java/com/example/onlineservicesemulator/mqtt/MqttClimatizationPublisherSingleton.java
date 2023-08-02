@@ -3,22 +3,23 @@ package com.example.onlineservicesemulator.mqtt;
 import com.example.onlineservicesemulator.models.Topic;
 import org.eclipse.paho.client.mqttv3.*;
 
-public class MqttPublisherSingleton {
+public class MqttClimatizationPublisherSingleton {
 
-    private static MqttPublisherSingleton instance;
+    private static MqttClimatizationPublisherSingleton instance;
     private MqttPublisher mqttPublisher;
     private static final String MQTT_CLIENT_ID = "OnlineServicesEmulator";
 
-    private MqttPublisherSingleton() throws MqttException {
+    private MqttClimatizationPublisherSingleton() throws MqttException {
         mqttPublisher = new MqttPublisher("tcp://broker.emqx.io:1883", Topic.INSIDE_TEMPERATURE_SENSOR.toString());
     }
 
-    public static synchronized MqttPublisherSingleton getInstance() throws MqttException {
+    public static synchronized MqttClimatizationPublisherSingleton getInstance() throws MqttException {
         if (instance == null) {
-            instance = new MqttPublisherSingleton();
+            instance = new MqttClimatizationPublisherSingleton();
         }
         return instance;
     }
+
     public MqttPublisher getMqttPublisher() {
         return mqttPublisher;
     }
