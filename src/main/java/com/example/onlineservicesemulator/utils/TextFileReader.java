@@ -9,18 +9,17 @@ import java.util.List;
 
 public class TextFileReader {
 
-    public static String getData(List<String> fileNames){
-        String fileData = "";
-        for(String fileName:fileNames){
+    public static String getData(List<String> fileNames) {
+        StringBuilder fileDataBuilder = new StringBuilder();
+        for (String fileName : fileNames) {
             try {
                 byte[] dataInBytes = Files.readAllBytes(Paths.get(Utils.getFileDestination(fileName)));
                 String dataInString = new String(dataInBytes, StandardCharsets.UTF_8);
-                fileData += dataInString + "\n" ;
+                fileDataBuilder.append(dataInString).append("\n");
             } catch (IOException e) {
                 e.printStackTrace();
-
             }
         }
-        return fileData;
+        return fileDataBuilder.toString();
     }
 }

@@ -1,6 +1,6 @@
 {
   "services": [
-    {"service": "WindowControlService"},
-    {"service": "MusicControlService"}
+    {"service": "CarClimatizationService"},
+    {"service": "CarGpsService"}
   ]
 }
