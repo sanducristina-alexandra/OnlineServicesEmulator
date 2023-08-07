@@ -5,7 +5,11 @@ import com.example.onlineservicesemulator.handlers.CarClimatizationSetTemperatur
 import com.example.onlineservicesemulator.handlers.CarGpsServiceHandler;
 import com.example.onlineservicesemulator.models.Topic;
 import com.example.onlineservicesemulator.mqtt.MqttPublisher;
+import com.example.onlineservicesemulator.utils.ClimatizationReportParser;
 import com.example.onlineservicesemulator.utils.JSONReader;
+import com.example.onlineservicesemulator.utils.TripReportParser;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -21,6 +25,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -52,7 +58,9 @@ public class Controller implements Initializable {
     @FXML
     private Button connectButton;
     @FXML
-    private Button getReportButton;
+    private Button buttonGetTripReport;
+    @FXML
+    private Button buttonGetClimatizationReport;
     @FXML
     private Label selectedService;
     @FXML
@@ -69,6 +77,7 @@ public class Controller implements Initializable {
     private Map<String, List<String>> servicesAndUploadedFilesMap;
     private MqttPublisher mqttPublisher;
     private final Alert popup = new Alert(Alert.AlertType.INFORMATION);
+    private static final String ROOT_DIRECTORY = System.getProperty("user.dir");
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -82,6 +91,8 @@ public class Controller implements Initializable {
         setTextFieldTemperatureFilter();
         setButtonTemperature();
         setButtonGenerateTripMap();
+        setButtonGetClimatizationReport();
+        setButtonGetTripReport();
     }
 
     public void createAndSetCheckboxList() {
@@ -344,5 +355,171 @@ public class Controller implements Initializable {
                 }
             }
         });
+    }
+
+    private void setButtonGetClimatizationReport() {
+        buttonGetClimatizationReport.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                Task<Void> task = new Task<Void>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        String serverUrl = "http://localhost:8080/get_last_climatization_report";
+                        URL url = new URL(serverUrl);
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("GET");
+
+                        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                            String inputLine;
+                            StringBuilder response = new StringBuilder();
+
+                            while ((inputLine = in.readLine()) != null) {
+                                response.append(inputLine);
+                            }
+                            in.close();
+
+                            String responseData = response.toString();
+                            Platform.runLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    showClimatizationReport(responseData);
+                                }
+                            });
+                        }
+                        conn.disconnect();
+
+                        return null;
+                    }
+                };
+
+                new Thread(task).start();
+            }
+        });
+    }
+
+    private void setButtonGetTripReport() {
+        buttonGetTripReport.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                Task<Void> task = new Task<Void>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        String serverUrl = "http://localhost:8080/get_last_trip_report";
+                        URL url = new URL(serverUrl);
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("GET");
+
+                        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                            String inputLine;
+                            StringBuilder response = new StringBuilder();
+
+                            while ((inputLine = in.readLine()) != null) {
+                                response.append(inputLine);
+                            }
+                            in.close();
+
+                            String responseData = response.toString();
+                            Platform.runLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    showTripReport(responseData);
+                                }
+                            });
+                        }
+                        conn.disconnect();
+                        return null;
+                    }
+                };
+                new Thread(task).start();
+            }
+        });
+    }
+
+    private void showTripReport(String responseData) {
+        String htmlTemplate = "<html><head><link rel=\"stylesheet" +
+                "\" type=\"text/css\" href=\"TripReport.css\"></head>" +
+                "<body><h1>Trip report</h1><p><strong>ReportId: </strong>{{ID}}" +
+                "</p><p><strong>Status: </strong>{{STATUS}}</p><p><strong>Start date: " +
+                "</strong>{{START_DATE}}</p><p><strong>End date: </strong>{{END_DATE}}" +
+                "</p><p><strong>Coordinates: </strong><ul>" +
+                "{{COORDINATES}}</ul></p><p><strong>SOS email: </strong>{{SOS_EMAIL}}</p>" +
+                "<img src=\"sebi_srl.png\" alt=\"Sebi SRL\"></body></html>";
+
+        String id = TripReportParser.getId(responseData);
+        String status = TripReportParser.getStatus(responseData);
+        String startDate = TripReportParser.getStartTripDate(responseData);
+        String endDate = TripReportParser.getEndTripDate(responseData);
+        String coordinates = TripReportParser.getCoordinates(responseData);
+        String sosEmail = TripReportParser.getSosEmail(responseData);
+
+        String coordinatesList = "<ul>";
+
+        String[] coordinateValues = coordinates.split(",");
+
+        for (int i = 0; i < coordinateValues.length; i += 2) {
+            String latitude = coordinateValues[i];
+            String longitude = coordinateValues[i + 1];
+            coordinatesList += "<li>" + latitude + ", " + longitude + "</li>";
+        }
+
+        coordinatesList += "</ul>";
+
+        String htmlContent = htmlTemplate.replace("{{ID}}", id)
+                .replace("{{STATUS}}", status)
+                .replace("{{START_DATE}}", startDate)
+                .replace("{{END_DATE}}", endDate)
+                .replace("{{COORDINATES}}", coordinatesList)
+                .replace("{{SOS_EMAIL}}", sosEmail);
+
+
+        String filePath = ROOT_DIRECTORY + "/TripReport.html";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(htmlContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            File htmlFile = new File(filePath);
+            Desktop.getDesktop().browse(htmlFile.toURI());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showClimatizationReport(String responseData) {
+
+        String htmlTemplate = "<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"ClimatizationReport.css\"></head>" +
+                "<body><h1>Climatization report</h1><p><strong>ReportId: </strong>{{ID}}" +
+                "</p><p><strong>Date: </strong>{{DATE}}</p><p><strong>Air Conditioning Power: </strong>{{AC_POWER}}" +
+                "</p><p><strong>Action Code: </strong>{{ACTION_CODE}}</p><img src=\"sebi_srl.png\" alt=\"Sebi SRL\"></body></html>";
+
+        System.out.println(responseData);
+        String id = ClimatizationReportParser.getId(responseData);
+        String date = ClimatizationReportParser.getDate(responseData);
+        String acPower = ClimatizationReportParser.getAcPower(responseData);
+        String actionCode = ClimatizationReportParser.getActionCode(responseData);
+
+        String htmlContent = htmlTemplate.replace("{{ID}}", id)
+                .replace("{{DATE}}", date)
+                .replace("{{AC_POWER}}", acPower)
+                .replace("{{ACTION_CODE}}", actionCode);
+
+
+        String filePath = ROOT_DIRECTORY + "/climatizationReport.html";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(htmlContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            File htmlFile = new File(filePath);
+            Desktop.getDesktop().browse(htmlFile.toURI());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
