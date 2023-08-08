@@ -16,7 +16,7 @@ public class MqttPublisher {
         this.topic = topic;
     }
 
-    public void connect() throws MqttException {
+    public void connect() {
         try {
             mqttClient = new MqttClient(brokerUrl, MQTT_CLIENT_ID, new MemoryPersistence());
             mqttClient.connect();

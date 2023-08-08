@@ -3,14 +3,12 @@ package com.example.onlineservicesemulator;
 import com.example.onlineservicesemulator.handlers.CarClimatizationFileHandler;
 import com.example.onlineservicesemulator.handlers.CarClimatizationSetTemperatureHandler;
 import com.example.onlineservicesemulator.handlers.CarGpsServiceHandler;
-import com.example.onlineservicesemulator.models.Topic;
-import com.example.onlineservicesemulator.mqtt.MqttPublisher;
 import com.example.onlineservicesemulator.utils.ClimatizationReportParser;
 import com.example.onlineservicesemulator.utils.JSONReader;
 import com.example.onlineservicesemulator.utils.TripReportParser;
+import com.example.onlineservicesemulator.utils.Utils;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -75,7 +73,6 @@ public class Controller implements Initializable {
     private Button buttonGenerateTripMap;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
-    private MqttPublisher mqttPublisher;
     private final Alert popup = new Alert(Alert.AlertType.INFORMATION);
     private static final String ROOT_DIRECTORY = System.getProperty("user.dir");
 
@@ -96,7 +93,7 @@ public class Controller implements Initializable {
     }
 
     public void createAndSetCheckboxList() {
-        short lengthSectionA = (short) (calculateLongestServiceString(servicesNames) * 9);
+        short lengthSectionA = (short) (Utils.calculateLongestServiceString(servicesNames) * 9);
         checkboxList.setPrefWidth(lengthSectionA);
         for (String serviceName : servicesNames) {
             CheckBox checkBox = new CheckBox();
@@ -130,15 +127,6 @@ public class Controller implements Initializable {
         servicesNames.forEach(service -> servicesAndUploadedFilesMap.put(service, new ArrayList<>()));
     }
 
-    public short calculateLongestServiceString(List<String> servicesNames) {
-        short max = 0;
-        for (String serviceName : servicesNames) {
-            if (serviceName.length() > max) {
-                max = (short) serviceName.length();
-            }
-        }
-        return max;
-    }
 
     public void addFiles(String serviceName) {
         addFileButton.setOnMouseClicked(mouseEvent -> {
@@ -190,16 +178,13 @@ public class Controller implements Initializable {
     }
 
     public void setRemoveFileButtonListener() {
-        removeFileButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                String fileToBeRemoved = filesList.getSelectionModel().getSelectedItem();
-                if (!fileToBeRemoved.isEmpty()) {
-                    filesList.getItems().remove(fileToBeRemoved);
-                    servicesAndUploadedFilesMap.get(selectedService.getText()).remove(fileToBeRemoved);
-                    removeFileFromDisk(fileToBeRemoved);
-                    refreshFilesList(selectedService.getText());
-                }
+        removeFileButton.setOnMouseClicked(event -> {
+            String fileToBeRemoved = filesList.getSelectionModel().getSelectedItem();
+            if (!fileToBeRemoved.isEmpty()) {
+                filesList.getItems().remove(fileToBeRemoved);
+                servicesAndUploadedFilesMap.get(selectedService.getText()).remove(fileToBeRemoved);
+                removeFileFromDisk(fileToBeRemoved);
+                refreshFilesList(selectedService.getText());
             }
         });
     }
@@ -224,34 +209,29 @@ public class Controller implements Initializable {
     }
 
     private void setFilesListListener() {
-        filesList.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                if (filesList.getSelectionModel().getSelectedItem() != null) {
-                    enableRemoveFileButton();
-                }
+        filesList.setOnMouseClicked(event -> {
+            if (filesList.getSelectionModel().getSelectedItem() != null) {
+                enableRemoveFileButton();
             }
         });
     }
 
     private void setConnectButton() {
-        connectButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                Topic topic = null;
-                switch (selectedService.getText()) {
-                    case "CarClimatizationService": {
-                        CarClimatizationFileHandler carClimatizationFileHandler =
-                                new CarClimatizationFileHandler(servicesAndUploadedFilesMap.get(selectedService.getText()));
-                        carClimatizationFileHandler.sendData();
-                        break;
-                    }
-                    case "CarGpsService": {
-                        CarGpsServiceHandler carGpsServiceHandler =
-                                new CarGpsServiceHandler(servicesAndUploadedFilesMap.get(selectedService.getText()));
-                        carGpsServiceHandler.sendData();
-                        break;
-                    }
+        connectButton.setOnMouseClicked(event -> {
+            switch (selectedService.getText()) {
+                case "CarClimatizationService": {
+                    CarClimatizationFileHandler carClimatizationFileHandler =
+                            new CarClimatizationFileHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
+                                    connectButton);
+                    carClimatizationFileHandler.sendData();
+                    break;
+                }
+                case "CarGpsService": {
+                    CarGpsServiceHandler carGpsServiceHandler =
+                            new CarGpsServiceHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
+                                    connectButton);
+                    carGpsServiceHandler.sendData();
+                    break;
                 }
             }
         });
@@ -279,6 +259,11 @@ public class Controller implements Initializable {
         addFileButton.setOpacity(1.0f);
     }
 
+    public void disableConnectButton() {
+        connectButton.setDisable(true);
+        connectButton.setOpacity(1.0f);
+    }
+
     private void setTextFieldTemperatureFilter() {
         UnaryOperator<TextFormatter.Change> filter = change -> {
             String newText = change.getControlNewText();
@@ -301,22 +286,69 @@ public class Controller implements Initializable {
     }
 
     private void setButtonTemperature() {
-        buttonTemperature.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                CarClimatizationSetTemperatureHandler carClimatizationSetTemperatureHandler = new CarClimatizationSetTemperatureHandler();
-                carClimatizationSetTemperatureHandler.sendData("set " + textFieldTemperature.getText());
-            }
+        buttonTemperature.setOnMouseClicked(event -> {
+            CarClimatizationSetTemperatureHandler carClimatizationSetTemperatureHandler
+                    = new CarClimatizationSetTemperatureHandler();
+            carClimatizationSetTemperatureHandler.sendData("set " + textFieldTemperature.getText());
         });
     }
 
     private void setButtonGenerateTripMap() {
-        buttonGenerateTripMap.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                try {
-                    String serverUrl = "http://localhost:8080/get_last_trip";
+        buttonGenerateTripMap.setOnMouseClicked(event -> {
+            try {
+                String serverUrl = "http://localhost:8080/get_last_trip";
 
+                URL url = new URL(serverUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+
+                if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    String inputLine;
+                    StringBuilder response = new StringBuilder();
+
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+
+                    try {
+                        if (!response.toString().isEmpty()) {
+                            String responseData = response.toString();
+                            responseData = responseData.replace("{", "%7B").replace("}", "%7D")
+                                    .replace("[", "%5B").replace("]", "%5D")
+                                    .replace(" ", "%20").replace("\"", "%22")
+                                    .replace("'", "%27").replace("<", "%3C")
+                                    .replace(">", "%3E").replace("|", "%7C")
+                                    .replace("\\", "%5C").replace("^", "%5E")
+                                    .replace("`", "%60");
+
+                            if (Desktop.isDesktopSupported()) {
+                                Desktop desktop = Desktop.getDesktop();
+                                desktop.browse(new URI(responseData));
+                            }
+                        }
+                        else{
+                            popup.setContentText("At least two coordinates are required to generate the map.");
+                            popup.showAndWait();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void setButtonGetClimatizationReport() {
+        buttonGetClimatizationReport.setOnMouseClicked(mouseEvent -> {
+            Task<Void> task = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    String serverUrl = "http://localhost:8080/get_last_climatization_report";
                     URL url = new URL(serverUrl);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
@@ -331,113 +363,68 @@ public class Controller implements Initializable {
                         }
                         in.close();
 
-                        try {
-                            String responseData = response.toString();
-                            responseData = responseData.replace("{", "%7B").replace("}", "%7D")
-                                    .replace("[", "%5B").replace("]", "%5D")
-                                    .replace(" ", "%20").replace("\"", "%22")
-                                    .replace("'", "%27").replace("<", "%3C")
-                                    .replace(">", "%3E").replace("|", "%7C")
-                                    .replace("\\", "%5C").replace("^", "%5E")
-                                    .replace("`", "%60");
-
-                            if (Desktop.isDesktopSupported()) {
-                                Desktop desktop = Desktop.getDesktop();
-                                desktop.browse(new URI(responseData));
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        String responseData = response.toString();
+                        Platform.runLater(() -> showClimatizationReport(responseData));
                     }
                     conn.disconnect();
-                } catch (Exception e) {
-                    e.printStackTrace();
+
+                    return null;
                 }
-            }
-        });
-    }
+            };
 
-    private void setButtonGetClimatizationReport() {
-        buttonGetClimatizationReport.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                Task<Void> task = new Task<Void>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        String serverUrl = "http://localhost:8080/get_last_climatization_report";
-                        URL url = new URL(serverUrl);
-                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                        conn.setRequestMethod("GET");
-
-                        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                            String inputLine;
-                            StringBuilder response = new StringBuilder();
-
-                            while ((inputLine = in.readLine()) != null) {
-                                response.append(inputLine);
-                            }
-                            in.close();
-
-                            String responseData = response.toString();
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    showClimatizationReport(responseData);
-                                }
-                            });
-                        }
-                        conn.disconnect();
-
-                        return null;
-                    }
-                };
-
-                new Thread(task).start();
-            }
+            new Thread(task).start();
         });
     }
 
     private void setButtonGetTripReport() {
-        buttonGetTripReport.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                Task<Void> task = new Task<Void>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        String serverUrl = "http://localhost:8080/get_last_trip_report";
-                        URL url = new URL(serverUrl);
-                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                        conn.setRequestMethod("GET");
+        buttonGetTripReport.setOnMouseClicked(mouseEvent -> {
+            Task<Void> task = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    String serverUrl = "http://localhost:8080/get_last_trip_report";
+                    URL url = new URL(serverUrl);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
 
-                        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                            String inputLine;
-                            StringBuilder response = new StringBuilder();
+                    if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                        String inputLine;
+                        StringBuilder response = new StringBuilder();
 
-                            while ((inputLine = in.readLine()) != null) {
-                                response.append(inputLine);
-                            }
-                            in.close();
-
-                            String responseData = response.toString();
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    showTripReport(responseData);
-                                }
-                            });
+                        while ((inputLine = in.readLine()) != null) {
+                            response.append(inputLine);
                         }
-                        conn.disconnect();
-                        return null;
+                        in.close();
+
+                        String responseData = response.toString();
+                        Platform.runLater(() -> showTripReport(responseData));
                     }
-                };
-                new Thread(task).start();
-            }
+                    conn.disconnect();
+                    return null;
+                }
+            };
+            new Thread(task).start();
         });
     }
 
     private void showTripReport(String responseData) {
+
+        String filePath = ROOT_DIRECTORY + "/TripReport.html";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(getTripReportHtmlContent(responseData));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            File htmlFile = new File(filePath);
+            Desktop.getDesktop().browse(htmlFile.toURI());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getTripReportHtmlContent(String responseData) {
         String htmlTemplate = "<html><head><link rel=\"stylesheet" +
                 "\" type=\"text/css\" href=\"TripReport.css\"></head>" +
                 "<body><h1>Trip report</h1><p><strong>ReportId: </strong>{{ID}}" +
@@ -454,29 +441,31 @@ public class Controller implements Initializable {
         String coordinates = TripReportParser.getCoordinates(responseData);
         String sosEmail = TripReportParser.getSosEmail(responseData);
 
-        String coordinatesList = "<ul>";
+        StringBuilder coordinatesList = new StringBuilder("<ul>");
 
         String[] coordinateValues = coordinates.split(",");
 
         for (int i = 0; i < coordinateValues.length; i += 2) {
             String latitude = coordinateValues[i];
             String longitude = coordinateValues[i + 1];
-            coordinatesList += "<li>" + latitude + ", " + longitude + "</li>";
+            coordinatesList.append("<li>").append(latitude).append(", ").append(longitude).append("</li>");
         }
 
-        coordinatesList += "</ul>";
+        coordinatesList.append("</ul>");
 
-        String htmlContent = htmlTemplate.replace("{{ID}}", id)
+        return htmlTemplate.replace("{{ID}}", id)
                 .replace("{{STATUS}}", status)
                 .replace("{{START_DATE}}", startDate)
                 .replace("{{END_DATE}}", endDate)
-                .replace("{{COORDINATES}}", coordinatesList)
+                .replace("{{COORDINATES}}", coordinatesList.toString())
                 .replace("{{SOS_EMAIL}}", sosEmail);
+    }
 
+    private void showClimatizationReport(String responseData) {
 
-        String filePath = ROOT_DIRECTORY + "/TripReport.html";
+        String filePath = ROOT_DIRECTORY + "/climatizationReport.html";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            writer.write(htmlContent);
+            writer.write(getClimatizationReportHtmlContent(responseData));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -489,8 +478,7 @@ public class Controller implements Initializable {
         }
     }
 
-    private void showClimatizationReport(String responseData) {
-
+    private String getClimatizationReportHtmlContent(String responseData) {
         String htmlTemplate = "<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"ClimatizationReport.css\"></head>" +
                 "<body><h1>Climatization report</h1><p><strong>ReportId: </strong>{{ID}}" +
                 "</p><p><strong>Date: </strong>{{DATE}}</p><p><strong>Air Conditioning Power: </strong>{{AC_POWER}}" +
@@ -502,24 +490,9 @@ public class Controller implements Initializable {
         String acPower = ClimatizationReportParser.getAcPower(responseData);
         String actionCode = ClimatizationReportParser.getActionCode(responseData);
 
-        String htmlContent = htmlTemplate.replace("{{ID}}", id)
+        return htmlTemplate.replace("{{ID}}", id)
                 .replace("{{DATE}}", date)
                 .replace("{{AC_POWER}}", acPower)
                 .replace("{{ACTION_CODE}}", actionCode);
-
-
-        String filePath = ROOT_DIRECTORY + "/climatizationReport.html";
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            writer.write(htmlContent);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            File htmlFile = new File(filePath);
-            Desktop.getDesktop().browse(htmlFile.toURI());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
