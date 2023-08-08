@@ -220,17 +220,31 @@ public class Controller implements Initializable {
         connectButton.setOnMouseClicked(event -> {
             switch (selectedService.getText()) {
                 case "CarClimatizationService": {
-                    CarClimatizationFileHandler carClimatizationFileHandler =
-                            new CarClimatizationFileHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
-                                    connectButton);
-                    carClimatizationFileHandler.sendData();
+                    if (servicesAndUploadedFilesMap.get(selectedService.getText()).isEmpty()) {
+                        popup.setContentText("No files uploaded. ");
+                        popup.showAndWait();
+                    }
+                    else{
+                        CarClimatizationFileHandler carClimatizationFileHandler =
+                                new CarClimatizationFileHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
+                                        connectButton);
+                        carClimatizationFileHandler.sendData();
+
+                    }
                     break;
                 }
                 case "CarGpsService": {
-                    CarGpsServiceHandler carGpsServiceHandler =
-                            new CarGpsServiceHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
-                                    connectButton);
-                    carGpsServiceHandler.sendData();
+                    if (servicesAndUploadedFilesMap.get(selectedService.getText()).isEmpty()) {
+                        popup.setContentText("No files uploaded. ");
+                        popup.showAndWait();
+                    }
+                    else{
+                        CarGpsServiceHandler carGpsServiceHandler =
+                                new CarGpsServiceHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
+                                        connectButton);
+                        carGpsServiceHandler.sendData();
+
+                    }
                     break;
                 }
             }
@@ -327,8 +341,7 @@ public class Controller implements Initializable {
                                 Desktop desktop = Desktop.getDesktop();
                                 desktop.browse(new URI(responseData));
                             }
-                        }
-                        else{
+                        } else {
                             popup.setContentText("At least two coordinates are required to generate the map.");
                             popup.showAndWait();
                         }
