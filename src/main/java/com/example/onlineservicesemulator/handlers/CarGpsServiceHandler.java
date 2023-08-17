@@ -1,8 +1,8 @@
 package com.example.onlineservicesemulator.handlers;
 
-import com.example.onlineservicesemulator.Controller;
 import com.example.onlineservicesemulator.mqtt.MqttGpsPublisherSingleton;
 import com.example.onlineservicesemulator.mqtt.MqttPublisher;
+import com.example.onlineservicesemulator.utils.ConsoleLogger;
 import com.example.onlineservicesemulator.utils.TextFileReader;
 import javafx.scene.control.Button;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -15,12 +15,12 @@ import java.util.TimerTask;
 public class CarGpsServiceHandler {
     private MqttPublisher mqttPublisher;
     private List<String> fileNames;
-    private Button connectButton;
+    private List<Button> greyedButtons;
 
-    public CarGpsServiceHandler(List<String> fileNames, Button connectButton) {
+    public CarGpsServiceHandler(List<String> fileNames, List<Button> greyedButtons) {
         try {
             this.fileNames = fileNames;
-            this.connectButton = connectButton;
+            this.greyedButtons = greyedButtons;
             this.mqttPublisher = MqttGpsPublisherSingleton.getInstance().getMqttPublisher();
             mqttPublisher.connect();
         } catch (Exception ex) {
@@ -29,8 +29,8 @@ public class CarGpsServiceHandler {
     }
 
     public void sendData() {
-        String[] pairs = Arrays.stream(TextFileReader.getData(fileNames)
-                        .substring(1, TextFileReader.getData(fileNames).length() - 1)
+        String[] pairs = Arrays.stream(TextFileReader.getData(fileNames, "CarGpsService")
+                        .substring(1, TextFileReader.getData(fileNames, "CarGpsService").length() - 1)
                         .split("\\},\\s?\\{"))
                 .map(s -> s.endsWith("}") ? s.substring(0, s.length() - 1) : s)
                 .toArray(String[]::new);
@@ -41,30 +41,35 @@ public class CarGpsServiceHandler {
             @Override
             public void run() {
                 if (currentIndex < pairs.length) {
-                    disableConnectButton();
+                    disableButtons();
                     String dataToSend = pairs[currentIndex];
                     try {
                         mqttPublisher.sendData(dataToSend);
+                        ConsoleLogger.log("Sent trip coordinates: " + dataToSend);
                     } catch (MqttException e) {
                         throw new RuntimeException(e);
                     }
                     currentIndex++;
                 } else {
-                    enableConnectButton();
+                    enableButtons();
                     timer.cancel();
                     timer.purge();
                 }
             }
-        }, 0, 10000);
+        }, 0, 3000);
     }
 
-    public void enableConnectButton() {
-        connectButton.setDisable(false);
-        connectButton.setOpacity(1.0f);
+    public void enableButtons() {
+        this.greyedButtons.forEach(button -> {
+            button.setDisable(false);
+            button.setOpacity(1.0f);
+        });
     }
 
-    public void disableConnectButton() {
-        connectButton.setDisable(true);
-        connectButton.setOpacity(0.5f);
+    public void disableButtons() {
+        this.greyedButtons.forEach(button -> {
+            button.setDisable(true);
+            button.setOpacity(0.5f);
+        });
     }
 }

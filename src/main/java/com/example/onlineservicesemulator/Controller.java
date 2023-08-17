@@ -4,6 +4,7 @@ import com.example.onlineservicesemulator.handlers.CarClimatizationFileHandler;
 import com.example.onlineservicesemulator.handlers.CarClimatizationSetTemperatureHandler;
 import com.example.onlineservicesemulator.handlers.CarGpsServiceHandler;
 import com.example.onlineservicesemulator.utils.ClimatizationReportParser;
+import com.example.onlineservicesemulator.utils.ConsoleLogger;
 import com.example.onlineservicesemulator.utils.JSONReader;
 import com.example.onlineservicesemulator.utils.TripReportParser;
 import com.example.onlineservicesemulator.utils.Utils;
@@ -11,17 +12,19 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextFormatter;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -35,13 +38,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
-import java.awt.Desktop;
 
 public class Controller implements Initializable {
 
@@ -71,6 +74,8 @@ public class Controller implements Initializable {
     private VBox vboxTripMap;
     @FXML
     private Button buttonGenerateTripMap;
+    @FXML
+    private TextArea textAreaConsole;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
     private final Alert popup = new Alert(Alert.AlertType.INFORMATION);
@@ -78,9 +83,11 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        ConsoleLogger.setTextAreaConsole(textAreaConsole);
         servicesNames = JSONReader.getServices();
         createAndSetCheckboxList();
         setFilesMap();
+        loadFilesInList();
         disableFileButtons();
         setFilesListListener();
         setRemoveFileButtonListener();
@@ -90,6 +97,25 @@ public class Controller implements Initializable {
         setButtonGenerateTripMap();
         setButtonGetClimatizationReport();
         setButtonGetTripReport();
+    }
+
+    private void loadFilesInList() {
+        Path uploadedFilesDir = Paths.get("UploadedFiles");
+        try {
+            Files.list(uploadedFilesDir).filter(Files::isDirectory).forEach(serviceDir -> {
+                List<String> fileNames = new ArrayList<>();
+                try {
+                    Files.list(serviceDir).filter(Files::isRegularFile).forEach(file -> {
+                        fileNames.add(file.getFileName().toString());
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                servicesAndUploadedFilesMap.put(serviceDir.getFileName().toString(), fileNames);
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void createAndSetCheckboxList() {
@@ -132,20 +158,21 @@ public class Controller implements Initializable {
         addFileButton.setOnMouseClicked(mouseEvent -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().addAll(
-                    new FileChooser.ExtensionFilter("CSV Files", "*.csv"),
-                    new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+                    new FileChooser.ExtensionFilter("Text Files", "*.txt"),
+                    new FileChooser.ExtensionFilter("CSV Files", "*.csv")
+            );
             List<File> selectedFiles = fileChooser.showOpenMultipleDialog(addFileButton.getScene().getWindow());
 
             if (selectedFiles != null) {
                 List<String> selectedFilesList = new ArrayList<>();
                 try {
-                    Path uploadedFilesDir = Paths.get(".\\uploadedfiles");
-                    if (!Files.exists(uploadedFilesDir)) {
-                        Files.createDirectory(uploadedFilesDir);
+                    Path uploadedFilesDir = Paths.get(".\\UploadedFiles");
+                    Path serviceSpecificPath = uploadedFilesDir.resolve(this.selectedService.getText());
+                    if (!Files.exists(serviceSpecificPath)) {
+                        Files.createDirectories(serviceSpecificPath);
                     }
-
                     for (File file : selectedFiles) {
-                        Path destination = uploadedFilesDir.resolve(file.getName());
+                        Path destination = serviceSpecificPath.resolve(file.getName());
                         if (Files.exists(destination)) {
                             popup.setContentText("File '" + file.getName() + "' is already uploaded.");
                             popup.showAndWait();
@@ -223,11 +250,11 @@ public class Controller implements Initializable {
                     if (servicesAndUploadedFilesMap.get(selectedService.getText()).isEmpty()) {
                         popup.setContentText("No files uploaded. ");
                         popup.showAndWait();
-                    }
-                    else{
+                    } else {
                         CarClimatizationFileHandler carClimatizationFileHandler =
                                 new CarClimatizationFileHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
-                                        connectButton);
+                                        new ArrayList<>(Arrays.asList(connectButton, buttonGetClimatizationReport,
+                                                buttonGenerateTripMap, buttonGetTripReport)));
                         carClimatizationFileHandler.sendData();
 
                     }
@@ -237,11 +264,11 @@ public class Controller implements Initializable {
                     if (servicesAndUploadedFilesMap.get(selectedService.getText()).isEmpty()) {
                         popup.setContentText("No files uploaded. ");
                         popup.showAndWait();
-                    }
-                    else{
+                    } else {
                         CarGpsServiceHandler carGpsServiceHandler =
                                 new CarGpsServiceHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
-                                        connectButton);
+                                        new ArrayList<>(Arrays.asList(connectButton, buttonGetClimatizationReport,
+                                                buttonGenerateTripMap, buttonGetTripReport)));
                         carGpsServiceHandler.sendData();
 
                     }

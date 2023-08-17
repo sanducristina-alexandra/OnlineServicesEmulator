@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 public class Utils {
     private static final String ROOT_DIRECTORY = System.getProperty("user.dir");
 
-    public static String getFileDestination(String fileName) {
-        String relativePath = "/uploadedfiles/" + fileName;
+    public static String getFileDestination(String fileName, String serviceName) {
+        String relativePath = "/uploadedfiles/" + serviceName + "/" + fileName;
         return ROOT_DIRECTORY + relativePath;
     }
 

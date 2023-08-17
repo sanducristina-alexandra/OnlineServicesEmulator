@@ -2,6 +2,7 @@ package com.example.onlineservicesemulator.handlers;
 
 import com.example.onlineservicesemulator.mqtt.MqttPublisher;
 import com.example.onlineservicesemulator.mqtt.MqttClimatizationPublisherSingleton;
+import com.example.onlineservicesemulator.utils.ConsoleLogger;
 import com.example.onlineservicesemulator.utils.TextFileReader;
 import javafx.scene.control.Button;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -14,12 +15,12 @@ import java.util.TimerTask;
 public class CarClimatizationFileHandler {
     private MqttPublisher mqttPublisher;
     private List<String> fileNames;
-    private Button connectButton;
+    private List<Button> greyedButtons;
 
-    public CarClimatizationFileHandler(List<String> fileNames, Button connectButton) {
+    public CarClimatizationFileHandler(List<String> fileNames, List<Button> greyedButtons) {
         try {
             this.fileNames = fileNames;
-            this.connectButton = connectButton;
+            this.greyedButtons = greyedButtons;
             this.mqttPublisher = MqttClimatizationPublisherSingleton.getInstance().getMqttPublisher();
             mqttPublisher.connect();
         } catch (Exception ex) {
@@ -28,7 +29,7 @@ public class CarClimatizationFileHandler {
     }
 
     public void sendData() {
-        String[] temperatures = TextFileReader.getData(fileNames).split(",");
+        String[] temperatures = TextFileReader.getData(fileNames, "CarClimatizationService").split(",");
         Timer timer = new Timer();
         System.out.println(Arrays.toString(temperatures));
         timer.schedule(new TimerTask() {
@@ -37,31 +38,36 @@ public class CarClimatizationFileHandler {
             @Override
             public void run() {
                 if (currentIndex < temperatures.length) {
-                    disableConnectButton();
+                    disableButtons();
                     String dataToSend = temperatures[currentIndex];
                     try {
                         mqttPublisher.sendData(dataToSend);
+                        ConsoleLogger.log("Sent car climatization value: " + dataToSend);
                     } catch (MqttException e) {
                         throw new RuntimeException(e);
                     }
                     currentIndex++;
                 } else {
-                    enableConnectButton();
+                    enableButtons();
                     timer.cancel();
                     timer.purge();
                 }
             }
-        }, 0, 15000);
+        }, 0, 5000);
     }
 
-    public void enableConnectButton() {
-        connectButton.setDisable(false);
-        connectButton.setOpacity(1.0f);
+    public void enableButtons() {
+        this.greyedButtons.forEach(button -> {
+            button.setDisable(false);
+            button.setOpacity(1.0f);
+        });
     }
 
-    public void disableConnectButton() {
-        connectButton.setDisable(true);
-        connectButton.setOpacity(0.5f);
+    public void disableButtons() {
+        this.greyedButtons.forEach(button -> {
+            button.setDisable(true);
+            button.setOpacity(0.5f);
+        });
     }
 
 }

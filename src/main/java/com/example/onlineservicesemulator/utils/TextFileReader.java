@@ -8,11 +8,11 @@ import java.util.List;
 
 public class TextFileReader {
 
-    public static String getData(List<String> fileNames) {
+    public static String getData(List<String> fileNames, String serviceName) {
         StringBuilder fileDataBuilder = new StringBuilder();
         for (String fileName : fileNames) {
             try {
-                byte[] dataInBytes = Files.readAllBytes(Paths.get(Utils.getFileDestination(fileName)));
+                byte[] dataInBytes = Files.readAllBytes(Paths.get(Utils.getFileDestination(fileName,serviceName)));
                 String dataInString = new String(dataInBytes, StandardCharsets.UTF_8);
                 fileDataBuilder.append(dataInString);
             } catch (IOException e) {
