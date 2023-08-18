@@ -217,15 +217,15 @@ public class Controller implements Initializable {
     }
 
     private void removeFileFromDisk(String fileToBeRemoved) {
-        Path uploadedFilesDir = Paths.get(".\\uploadedfiles");
+        Path uploadedFilesDir = Paths.get(".\\UploadedFiles\\").resolve(selectedService.getText());
         Path filePath = uploadedFilesDir.resolve(fileToBeRemoved);
         if (Files.exists(filePath)) {
             try {
                 Files.delete(filePath);
-                popup.setContentText("File deleted successfully: " + filePath);
+                popup.setContentText("File deleted successfully.");
                 popup.showAndWait();
             } catch (IOException e) {
-                popup.setContentText("Error deleting file: " + filePath);
+                popup.setContentText("Error deleting file.");
                 popup.showAndWait();
             }
         } else {
@@ -337,6 +337,7 @@ public class Controller implements Initializable {
     private void setButtonGenerateTripMap() {
         buttonGenerateTripMap.setOnMouseClicked(event -> {
             try {
+                ConsoleLogger.log("Generating trip map...");
                 String serverUrl = "http://localhost:8080/get_last_trip";
 
                 URL url = new URL(serverUrl);
@@ -388,6 +389,7 @@ public class Controller implements Initializable {
             Task<Void> task = new Task<>() {
                 @Override
                 protected Void call() throws Exception {
+                    ConsoleLogger.log("Generating climatization report ...");
                     String serverUrl = "http://localhost:8080/get_last_climatization_report";
                     URL url = new URL(serverUrl);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -421,6 +423,7 @@ public class Controller implements Initializable {
             Task<Void> task = new Task<>() {
                 @Override
                 protected Void call() throws Exception {
+                    ConsoleLogger.log("Generating trip report ...");
                     String serverUrl = "http://localhost:8080/get_last_trip_report";
                     URL url = new URL(serverUrl);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -449,6 +452,7 @@ public class Controller implements Initializable {
 
     private void showTripReport(String responseData) {
 
+        ConsoleLogger.log("Trip report generation complete.");
         String filePath = ROOT_DIRECTORY + "/TripReport.html";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             writer.write(getTripReportHtmlContent(responseData));
@@ -502,6 +506,7 @@ public class Controller implements Initializable {
     }
 
     private void showClimatizationReport(String responseData) {
+        ConsoleLogger.log("Climatization report generation complete.");
 
         String filePath = ROOT_DIRECTORY + "/climatizationReport.html";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
