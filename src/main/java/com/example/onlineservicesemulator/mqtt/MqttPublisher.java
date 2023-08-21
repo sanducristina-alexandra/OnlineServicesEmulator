@@ -1,11 +1,13 @@
 package com.example.onlineservicesemulator.mqtt;
 
+import com.example.onlineservicesemulator.utils.ConsoleLogger;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 public class MqttPublisher {
+
     private final String brokerUrl;
     private final String topic;
     private MqttClient mqttClient;
@@ -35,4 +37,5 @@ public class MqttPublisher {
         MqttMessage message = new MqttMessage(data.getBytes());
         mqttClient.publish(topic, message);
     }
+
 }

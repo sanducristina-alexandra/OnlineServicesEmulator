@@ -12,6 +12,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -88,7 +89,7 @@ public class Controller implements Initializable {
         disableSetTemperatureButton();
         setFilesListListener();
         setRemoveFileButtonListener();
-        setConnectButton();
+        setSendDataButton();
         setTextFieldTemperatureFilter();
         setTextFieldTemperature();
         setButtonTemperature();
@@ -150,7 +151,6 @@ public class Controller implements Initializable {
         servicesAndUploadedFilesMap = new HashMap<>();
         servicesNames.forEach(service -> servicesAndUploadedFilesMap.put(service, new ArrayList<>()));
     }
-
 
     public void addFiles(String serviceName) {
         addFileButton.setOnMouseClicked(mouseEvent -> {
@@ -241,7 +241,7 @@ public class Controller implements Initializable {
         });
     }
 
-    private void setConnectButton() {
+    private void setSendDataButton() {
         sendDataButton.setOnMouseClicked(event -> {
             switch (selectedService.getText()) {
                 case "CarClimatizationService": {
@@ -298,12 +298,12 @@ public class Controller implements Initializable {
         addFileButton.setOpacity(1.0f);
     }
 
-    private void disableSetTemperatureButton(){
+    private void disableSetTemperatureButton() {
         buttonTemperature.setDisable(true);
         buttonTemperature.setOpacity(0.5f);
     }
 
-    private void enableSetTemperatureButton(){
+    private void enableSetTemperatureButton() {
         buttonTemperature.setDisable(false);
         buttonTemperature.setOpacity(1.0f);
     }
@@ -393,8 +393,7 @@ public class Controller implements Initializable {
                         }
                     }
                     conn.disconnect();
-                }
-                catch (IOException ex){
+                } catch (IOException ex) {
                     ConsoleLogger.log("Failed to generate trip map. Can't connect to the server.");
                 }
             } catch (Exception e) {

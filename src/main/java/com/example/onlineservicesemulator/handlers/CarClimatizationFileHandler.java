@@ -13,6 +13,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class CarClimatizationFileHandler {
+
     private MqttPublisher mqttPublisher;
     private List<String> fileNames;
     private List<Button> greyedButtons;
@@ -53,7 +54,7 @@ public class CarClimatizationFileHandler {
                     timer.purge();
                 }
             }
-        }, 0, 5000);
+        }, 0, 3000);
     }
 
     public void enableButtons() {

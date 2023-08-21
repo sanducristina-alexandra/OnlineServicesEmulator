@@ -3,6 +3,7 @@ package com.example.onlineservicesemulator.mqtt;
 import com.example.onlineservicesemulator.models.Topic;
 
 public class MqttGpsPublisherSingleton {
+
     private static MqttGpsPublisherSingleton instance;
     private final MqttPublisher mqttPublisher;
 
