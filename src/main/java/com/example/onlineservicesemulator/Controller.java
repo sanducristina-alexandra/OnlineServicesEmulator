@@ -25,12 +25,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
 import java.awt.Desktop;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -48,6 +43,7 @@ import java.util.regex.Pattern;
 
 public class Controller implements Initializable {
 
+    private final Alert popup = new Alert(Alert.AlertType.INFORMATION);
     @FXML
     private ListView<String> filesList;
     @FXML
@@ -57,7 +53,7 @@ public class Controller implements Initializable {
     @FXML
     private Button removeFileButton;
     @FXML
-    private Button connectButton;
+    private Button sendDataButton;
     @FXML
     private Button buttonGetTripReport;
     @FXML
@@ -78,7 +74,7 @@ public class Controller implements Initializable {
     private TextArea textAreaConsole;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
-    private final Alert popup = new Alert(Alert.AlertType.INFORMATION);
+    CarClimatizationSetTemperatureHandler carClimatizationSetTemperatureHandler;
     private static final String ROOT_DIRECTORY = System.getProperty("user.dir");
 
     @Override
@@ -89,10 +85,12 @@ public class Controller implements Initializable {
         setFilesMap();
         loadFilesInList();
         disableFileButtons();
+        disableSetTemperatureButton();
         setFilesListListener();
         setRemoveFileButtonListener();
         setConnectButton();
         setTextFieldTemperatureFilter();
+        setTextFieldTemperature();
         setButtonTemperature();
         setButtonGenerateTripMap();
         setButtonGetClimatizationReport();
@@ -244,7 +242,7 @@ public class Controller implements Initializable {
     }
 
     private void setConnectButton() {
-        connectButton.setOnMouseClicked(event -> {
+        sendDataButton.setOnMouseClicked(event -> {
             switch (selectedService.getText()) {
                 case "CarClimatizationService": {
                     if (servicesAndUploadedFilesMap.get(selectedService.getText()).isEmpty()) {
@@ -253,7 +251,7 @@ public class Controller implements Initializable {
                     } else {
                         CarClimatizationFileHandler carClimatizationFileHandler =
                                 new CarClimatizationFileHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
-                                        new ArrayList<>(Arrays.asList(connectButton, buttonGetClimatizationReport,
+                                        new ArrayList<>(Arrays.asList(sendDataButton, buttonGetClimatizationReport,
                                                 buttonGenerateTripMap, buttonGetTripReport)));
                         carClimatizationFileHandler.sendData();
 
@@ -267,7 +265,7 @@ public class Controller implements Initializable {
                     } else {
                         CarGpsServiceHandler carGpsServiceHandler =
                                 new CarGpsServiceHandler(servicesAndUploadedFilesMap.get(selectedService.getText()),
-                                        new ArrayList<>(Arrays.asList(connectButton, buttonGetClimatizationReport,
+                                        new ArrayList<>(Arrays.asList(sendDataButton, buttonGetClimatizationReport,
                                                 buttonGenerateTripMap, buttonGetTripReport)));
                         carGpsServiceHandler.sendData();
 
@@ -300,9 +298,14 @@ public class Controller implements Initializable {
         addFileButton.setOpacity(1.0f);
     }
 
-    public void disableConnectButton() {
-        connectButton.setDisable(true);
-        connectButton.setOpacity(1.0f);
+    private void disableSetTemperatureButton(){
+        buttonTemperature.setDisable(true);
+        buttonTemperature.setOpacity(0.5f);
+    }
+
+    private void enableSetTemperatureButton(){
+        buttonTemperature.setDisable(false);
+        buttonTemperature.setOpacity(1.0f);
     }
 
     private void setTextFieldTemperatureFilter() {
@@ -326,10 +329,20 @@ public class Controller implements Initializable {
         textFieldTemperature.setTextFormatter(textFormatter);
     }
 
+    private void setTextFieldTemperature() {
+        textFieldTemperature.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.trim().isEmpty()) {
+                disableSetTemperatureButton();
+            } else {
+                enableSetTemperatureButton();
+            }
+        });
+    }
+
     private void setButtonTemperature() {
         buttonTemperature.setOnMouseClicked(event -> {
-            CarClimatizationSetTemperatureHandler carClimatizationSetTemperatureHandler
-                    = new CarClimatizationSetTemperatureHandler();
+            if (carClimatizationSetTemperatureHandler == null)
+                carClimatizationSetTemperatureHandler = new CarClimatizationSetTemperatureHandler();
             carClimatizationSetTemperatureHandler.sendData("set " + textFieldTemperature.getText());
         });
     }
@@ -340,57 +353,7 @@ public class Controller implements Initializable {
                 ConsoleLogger.log("Generating trip map...");
                 String serverUrl = "http://localhost:8080/get_last_trip";
 
-                URL url = new URL(serverUrl);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-
-                if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    String inputLine;
-                    StringBuilder response = new StringBuilder();
-
-                    while ((inputLine = in.readLine()) != null) {
-                        response.append(inputLine);
-                    }
-                    in.close();
-
-                    try {
-                        if (!response.toString().isEmpty()) {
-                            String responseData = response.toString();
-                            responseData = responseData.replace("{", "%7B").replace("}", "%7D")
-                                    .replace("[", "%5B").replace("]", "%5D")
-                                    .replace(" ", "%20").replace("\"", "%22")
-                                    .replace("'", "%27").replace("<", "%3C")
-                                    .replace(">", "%3E").replace("|", "%7C")
-                                    .replace("\\", "%5C").replace("^", "%5E")
-                                    .replace("`", "%60");
-
-                            if (Desktop.isDesktopSupported()) {
-                                Desktop desktop = Desktop.getDesktop();
-                                desktop.browse(new URI(responseData));
-                            }
-                        } else {
-                            popup.setContentText("At least two coordinates are required to generate the map.");
-                            popup.showAndWait();
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                conn.disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    private void setButtonGetClimatizationReport() {
-        buttonGetClimatizationReport.setOnMouseClicked(mouseEvent -> {
-            Task<Void> task = new Task<>() {
-                @Override
-                protected Void call() throws Exception {
-                    ConsoleLogger.log("Generating climatization report ...");
-                    String serverUrl = "http://localhost:8080/get_last_climatization_report";
+                try {
                     URL url = new URL(serverUrl);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
@@ -405,11 +368,71 @@ public class Controller implements Initializable {
                         }
                         in.close();
 
-                        String responseData = response.toString();
-                        Platform.runLater(() -> showClimatizationReport(responseData));
+                        try {
+                            if (!response.toString().isEmpty()) {
+                                String responseData = response.toString();
+                                responseData = responseData.replace("{", "%7B").replace("}", "%7D")
+                                        .replace("[", "%5B").replace("]", "%5D")
+                                        .replace(" ", "%20").replace("\"", "%22")
+                                        .replace("'", "%27").replace("<", "%3C")
+                                        .replace(">", "%3E").replace("|", "%7C")
+                                        .replace("\\", "%5C").replace("^", "%5E")
+                                        .replace("`", "%60");
+
+                                if (Desktop.isDesktopSupported()) {
+                                    Desktop desktop = Desktop.getDesktop();
+                                    desktop.browse(new URI(responseData));
+                                }
+                            } else {
+                                popup.setContentText("At least two coordinates are required to generate the map.");
+                                popup.showAndWait();
+                            }
+                        } catch (Exception e) {
+                            ConsoleLogger.log("Error parsing the trip map URL.");
+                            e.printStackTrace();
+                        }
                     }
                     conn.disconnect();
+                }
+                catch (IOException ex){
+                    ConsoleLogger.log("Failed to generate trip map. Can't connect to the server.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
+    private void setButtonGetClimatizationReport() {
+        buttonGetClimatizationReport.setOnMouseClicked(mouseEvent -> {
+            Task<Void> task = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    ConsoleLogger.log("Generating climatization report ...");
+                    String serverUrl = "http://localhost:8080/get_last_climatization_report";
+                    try {
+                        URL url = new URL(serverUrl);
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("GET");
+
+                        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                            String inputLine;
+                            StringBuilder response = new StringBuilder();
+
+                            while ((inputLine = in.readLine()) != null) {
+                                response.append(inputLine);
+                            }
+                            in.close();
+
+                            String responseData = response.toString();
+                            Platform.runLater(() -> showClimatizationReport(responseData));
+                        }
+
+                        conn.disconnect();
+                    } catch (IOException ex) {
+                        ConsoleLogger.log("Failed to generate climatization report. Can't connect to the server.");
+                    }
                     return null;
                 }
             };
@@ -425,24 +448,28 @@ public class Controller implements Initializable {
                 protected Void call() throws Exception {
                     ConsoleLogger.log("Generating trip report ...");
                     String serverUrl = "http://localhost:8080/get_last_trip_report";
-                    URL url = new URL(serverUrl);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
+                    try {
+                        URL url = new URL(serverUrl);
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("GET");
 
-                    if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                        String inputLine;
-                        StringBuilder response = new StringBuilder();
+                        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                            String inputLine;
+                            StringBuilder response = new StringBuilder();
 
-                        while ((inputLine = in.readLine()) != null) {
-                            response.append(inputLine);
+                            while ((inputLine = in.readLine()) != null) {
+                                response.append(inputLine);
+                            }
+                            in.close();
+
+                            String responseData = response.toString();
+                            Platform.runLater(() -> showTripReport(responseData));
                         }
-                        in.close();
-
-                        String responseData = response.toString();
-                        Platform.runLater(() -> showTripReport(responseData));
+                        conn.disconnect();
+                    } catch (IOException e) {
+                        ConsoleLogger.log("Failed to generate trip report. Can't connect to the server.");
                     }
-                    conn.disconnect();
                     return null;
                 }
             };
@@ -529,7 +556,6 @@ public class Controller implements Initializable {
                 "</p><p><strong>Date: </strong>{{DATE}}</p><p><strong>Air Conditioning Power: </strong>{{AC_POWER}}" +
                 "</p><p><strong>Action Code: </strong>{{ACTION_CODE}}</p><img src=\"sebi_srl.png\" alt=\"Sebi SRL\"></body></html>";
 
-        System.out.println(responseData);
         String id = ClimatizationReportParser.getId(responseData);
         String date = ClimatizationReportParser.getDate(responseData);
         String acPower = ClimatizationReportParser.getAcPower(responseData);

@@ -31,7 +31,6 @@ public class CarClimatizationFileHandler {
     public void sendData() {
         String[] temperatures = TextFileReader.getData(fileNames, "CarClimatizationService").split(",");
         Timer timer = new Timer();
-        System.out.println(Arrays.toString(temperatures));
         timer.schedule(new TimerTask() {
             int currentIndex = 0;
 
@@ -44,7 +43,8 @@ public class CarClimatizationFileHandler {
                         mqttPublisher.sendData(dataToSend);
                         ConsoleLogger.log("Sent car climatization value: " + dataToSend);
                     } catch (MqttException e) {
-                        throw new RuntimeException(e);
+                        ConsoleLogger.log("Failed to send temperatures. Can't connect to the server");
+                        e.printStackTrace();
                     }
                     currentIndex++;
                 } else {

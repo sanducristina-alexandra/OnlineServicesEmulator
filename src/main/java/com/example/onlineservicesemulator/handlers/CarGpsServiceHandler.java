@@ -47,7 +47,8 @@ public class CarGpsServiceHandler {
                         mqttPublisher.sendData(dataToSend);
                         ConsoleLogger.log("Sent trip coordinates: " + dataToSend);
                     } catch (MqttException e) {
-                        throw new RuntimeException(e);
+                        ConsoleLogger.log("Failed to sennd GPS coordinates. Can't connect to the server");
+                        e.printStackTrace();
                     }
                     currentIndex++;
                 } else {
