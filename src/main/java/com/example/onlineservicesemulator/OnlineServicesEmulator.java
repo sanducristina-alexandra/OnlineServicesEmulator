@@ -12,7 +12,7 @@ public class OnlineServicesEmulator extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(OnlineServicesEmulator.class.getResource("view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 655, 350);
+        Scene scene = new Scene(fxmlLoader.load(), 800, 680);
         stage.setScene(scene);
         stage.show();
     }

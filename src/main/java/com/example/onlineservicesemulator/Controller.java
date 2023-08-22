@@ -20,6 +20,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -77,6 +79,8 @@ public class Controller implements Initializable {
     private Button buttonGenerateTripMap;
     @FXML
     private TextArea textAreaConsole;
+    @FXML
+    private ImageView imageViewCockpit;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
     private CarClimatizationSetTemperatureHandler carClimatizationSetTemperatureHandler;
@@ -86,6 +90,7 @@ public class Controller implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         ConsoleLogger.setTextAreaConsole(textAreaConsole);
         servicesNames = JSONReader.getServices();
+        loadImageViewCockpit();
         createAndSetCheckboxList();
         setFilesMap();
         loadFilesInList();
@@ -100,6 +105,10 @@ public class Controller implements Initializable {
         setButtonGenerateTripMap();
         setButtonGetClimatizationReport();
         setButtonGetTripReport();
+    }
+
+    private void loadImageViewCockpit() {
+        imageViewCockpit.setImage(new Image("file:Cockpit.jpg"));
     }
 
     private void loadFilesInList() {
