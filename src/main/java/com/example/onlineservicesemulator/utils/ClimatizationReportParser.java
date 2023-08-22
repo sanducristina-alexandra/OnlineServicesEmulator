@@ -8,7 +8,7 @@ public class ClimatizationReportParser {
     }
 
     public static String getDate(String reportData) {
-        String reportDatePattern = "Date: ([^ ]+ [^ ]+ \\d{2} \\d{2}:\\d{2}:\\d{2} [A-Z]+ \\d{4})";
+        String reportDatePattern = "Date: (\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})";
         return Utils.extractValue(reportData, reportDatePattern);
     }
 
