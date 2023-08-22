@@ -13,12 +13,12 @@ public class TripReportParser {
     }
 
     public static String getStartTripDate(String reportData) {
-        String reportStartDatePattern = "startTripDate: ([^ ]+ [^ ]+ \\d{2} \\d{2}:\\d{2}:\\d{2} [A-Z]+ \\d{4})";
+        String reportStartDatePattern = "Date: (\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})";
         return Utils.extractValue(reportData, reportStartDatePattern);
     }
 
     public static String getEndTripDate(String reportData) {
-        String reportEndDatePattern = "endTripDate: ([^ ]+ [^ ]+ \\d{2} \\d{2}:\\d{2}:\\d{2} [A-Z]+ \\d{4})";
+        String reportEndDatePattern = "Date: (\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})";
         return Utils.extractValue(reportData, reportEndDatePattern);
     }
 

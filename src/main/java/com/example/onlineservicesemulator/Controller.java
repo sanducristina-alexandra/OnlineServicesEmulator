@@ -12,7 +12,6 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -80,7 +79,7 @@ public class Controller implements Initializable {
     private TextArea textAreaConsole;
     private List<String> servicesNames;
     private Map<String, List<String>> servicesAndUploadedFilesMap;
-    CarClimatizationSetTemperatureHandler carClimatizationSetTemperatureHandler;
+    private CarClimatizationSetTemperatureHandler carClimatizationSetTemperatureHandler;
     private static final String ROOT_DIRECTORY = System.getProperty("user.dir");
 
     @Override
